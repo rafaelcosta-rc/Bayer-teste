@@ -5,7 +5,24 @@ from streamlit_folium import st_folium
 import plotly.express as px
 from PIL import Image
 
-st.set_page_config(layout="centered")
+# =========================
+# CONFIG (WIDE DE NOVO)
+# =========================
+st.set_page_config(layout="wide")
+
+# =========================
+# CSS PARA EQUILÍBRIO
+# =========================
+st.markdown("""
+<style>
+.block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+}
+thead tr th {text-align: center !important;}
+tbody tr td {text-align: center !important;}
+</style>
+""", unsafe_allow_html=True)
 
 # =========================
 # FORMATACAO
@@ -15,16 +32,6 @@ def fmt_num(x):
 
 def fmt_pct(x):
     return f"{x:.4f}%"
-
-# =========================
-# CSS CENTRALIZACAO
-# =========================
-st.markdown("""
-<style>
-thead tr th {text-align: center !important;}
-tbody tr td {text-align: center !important;}
-</style>
-""", unsafe_allow_html=True)
 
 # =========================
 # LOGIN
@@ -52,10 +59,12 @@ if not st.session_state.logged:
 PRECO_SACA = 850
 
 # =========================
-# LOGO
+# LOGO AJUSTADA
 # =========================
 logo = Image.open("Agroceres.png")
-st.image(logo, use_container_width=True)
+c1, c2, c3 = st.columns([1,2,1])
+with c2:
+    st.image(logo, width=250)
 
 # =========================
 # LOAD
@@ -94,10 +103,9 @@ if status: df = df[df["Status"].isin(status)]
 if uf: df = df[df["UF"].isin(uf)]
 
 # =========================
-# MARKET SHARE AJUSTADO
+# MARKET SHARE
 # =========================
 area_filtrada = area.copy()
-
 if municipio:
     area_filtrada = area_filtrada[area_filtrada["Municipio"].isin(municipio)]
 
@@ -115,13 +123,12 @@ market_share = (total_sacas / area_total) * 100 if area_total > 0 else 0
 
 st.title("📊 Inteligência Comercial - Sementes de Milho")
 
-# layout responsivo natural
-c1, c2, c3 = st.columns(3)
+# KPI em linha (melhor desktop + ok mobile)
+c1, c2, c3, c4, c5 = st.columns(5)
+
 c1.metric("🌽 Sacas", fmt_num(total_sacas))
 c2.metric("💰 Receita", fmt_num(total_receita))
 c3.metric("👥 Clientes", clientes)
-
-c4, c5 = st.columns(2)
 c4.metric("🎯 Ticket Médio", fmt_num(ticket))
 c5.metric("📊 Market Share", fmt_pct(market_share))
 
@@ -184,25 +191,6 @@ roi["ROI (%)"] = (roi["Lucro"] / roi["Investimento"]) * 100
 st.dataframe(roi, use_container_width=True)
 
 # =========================
-# OPORTUNIDADES
-# =========================
-st.subheader("⚠️ Oportunidades")
-
-op = df[df["Status"]!="Convertido"]
-op_group = op.groupby("Municipio")["Sacas"].sum().reset_index()
-
-st.dataframe(op_group, use_container_width=True)
-
-# =========================
-# CLIENTES POR MUNICIPIO
-# =========================
-st.subheader("📌 Clientes por Município")
-
-clientes_mun = op.groupby("Municipio")["Cliente_ID"].apply(list).reset_index()
-
-st.dataframe(clientes_mun, use_container_width=True)
-
-# =========================
 # MAPA
 # =========================
 st.subheader("🗺️ Mapa")
@@ -236,4 +224,4 @@ legend = """
 """
 mapa.get_root().html.add_child(folium.Element(legend))
 
-st_folium(mapa, width=None, height=450)
+st_folium(mapa, width=None, height=500)
