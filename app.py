@@ -5,13 +5,7 @@ from streamlit_folium import st_folium
 import plotly.express as px
 from PIL import Image
 
-# =========================
-# CONFIG RESPONSIVO
-# =========================
 st.set_page_config(layout="centered")
-
-# detectar mobile manual (fallback simples)
-is_mobile = st.sidebar.toggle("Modo Mobile", value=False)
 
 # =========================
 # FORMATACAO
@@ -58,12 +52,10 @@ if not st.session_state.logged:
 PRECO_SACA = 850
 
 # =========================
-# LOGO CENTRAL
+# LOGO
 # =========================
 logo = Image.open("Agroceres.png")
-c1, c2, c3 = st.columns([1,2,1])
-with c2:
-    st.image(logo, width=200 if is_mobile else 300)
+st.image(logo, use_container_width=True)
 
 # =========================
 # LOAD
@@ -123,20 +115,15 @@ market_share = (total_sacas / area_total) * 100 if area_total > 0 else 0
 
 st.title("📊 Inteligência Comercial - Sementes de Milho")
 
-# layout responsivo KPI
-if is_mobile:
-    st.metric("🌽 Sacas", fmt_num(total_sacas))
-    st.metric("💰 Receita", fmt_num(total_receita))
-    st.metric("👥 Clientes", clientes)
-    st.metric("🎯 Ticket Médio", fmt_num(ticket))
-    st.metric("📊 Market Share", fmt_pct(market_share))
-else:
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("🌽 Sacas", fmt_num(total_sacas))
-    c2.metric("💰 Receita", fmt_num(total_receita))
-    c3.metric("👥 Clientes", clientes)
-    c4.metric("🎯 Ticket Médio", fmt_num(ticket))
-    c5.metric("📊 Market Share", fmt_pct(market_share))
+# layout responsivo natural
+c1, c2, c3 = st.columns(3)
+c1.metric("🌽 Sacas", fmt_num(total_sacas))
+c2.metric("💰 Receita", fmt_num(total_receita))
+c3.metric("👥 Clientes", clientes)
+
+c4, c5 = st.columns(2)
+c4.metric("🎯 Ticket Médio", fmt_num(ticket))
+c5.metric("📊 Market Share", fmt_pct(market_share))
 
 # =========================
 # PIPELINE
@@ -216,7 +203,7 @@ clientes_mun = op.groupby("Municipio")["Cliente_ID"].apply(list).reset_index()
 st.dataframe(clientes_mun, use_container_width=True)
 
 # =========================
-# MAPA RESPONSIVO
+# MAPA
 # =========================
 st.subheader("🗺️ Mapa")
 
@@ -249,8 +236,4 @@ legend = """
 """
 mapa.get_root().html.add_child(folium.Element(legend))
 
-st_folium(
-    mapa,
-    width=350 if is_mobile else 1200,
-    height=400 if is_mobile else 500
-)
+st_folium(mapa, width=None, height=450)
