@@ -61,12 +61,6 @@ PRECO_SACA = 850
 # =========================
 # LOGO AJUSTADA
 # =========================
-logo = Image.open("Agroceres.png")
-
-c1, c2, c3 = st.columns([1,2,1])
-
-with c2:
-    st.image(logo, width=250)
 
 # =========================
 # LOAD
