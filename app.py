@@ -5,7 +5,13 @@ from streamlit_folium import st_folium
 import plotly.express as px
 from PIL import Image
 
-st.set_page_config(layout="wide")
+# =========================
+# CONFIG RESPONSIVO
+# =========================
+st.set_page_config(layout="centered")
+
+# detectar mobile manual (fallback simples)
+is_mobile = st.sidebar.toggle("Modo Mobile", value=False)
 
 # =========================
 # FORMATACAO
@@ -52,12 +58,12 @@ if not st.session_state.logged:
 PRECO_SACA = 850
 
 # =========================
-# LOGO
+# LOGO CENTRAL
 # =========================
 logo = Image.open("Agroceres.png")
 c1, c2, c3 = st.columns([1,2,1])
 with c2:
-    st.image(logo, width=250)
+    st.image(logo, width=200 if is_mobile else 300)
 
 # =========================
 # LOAD
@@ -96,7 +102,7 @@ if status: df = df[df["Status"].isin(status)]
 if uf: df = df[df["UF"].isin(uf)]
 
 # =========================
-# MARKET SIZE AJUSTADO (COM FILTRO)
+# MARKET SHARE AJUSTADO
 # =========================
 area_filtrada = area.copy()
 
@@ -117,13 +123,20 @@ market_share = (total_sacas / area_total) * 100 if area_total > 0 else 0
 
 st.title("📊 Inteligência Comercial - Sementes de Milho")
 
-c1, c2, c3, c4, c5 = st.columns(5)
-
-c1.metric("🌽 Sacas", fmt_num(total_sacas))
-c2.metric("💰 Receita", fmt_num(total_receita))
-c3.metric("👥 Clientes", clientes)
-c4.metric("🎯 Ticket Médio", fmt_num(ticket))
-c5.metric("📊 Market Share", fmt_pct(market_share))
+# layout responsivo KPI
+if is_mobile:
+    st.metric("🌽 Sacas", fmt_num(total_sacas))
+    st.metric("💰 Receita", fmt_num(total_receita))
+    st.metric("👥 Clientes", clientes)
+    st.metric("🎯 Ticket Médio", fmt_num(ticket))
+    st.metric("📊 Market Share", fmt_pct(market_share))
+else:
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("🌽 Sacas", fmt_num(total_sacas))
+    c2.metric("💰 Receita", fmt_num(total_receita))
+    c3.metric("👥 Clientes", clientes)
+    c4.metric("🎯 Ticket Médio", fmt_num(ticket))
+    c5.metric("📊 Market Share", fmt_pct(market_share))
 
 # =========================
 # PIPELINE
@@ -168,7 +181,7 @@ perf["Market Share (%)"] = (perf["Sacas"] / total_sacas) * 100
 st.dataframe(perf, use_container_width=True)
 
 # =========================
-# ROI CORRIGIDO (SEM RANDOM)
+# ROI
 # =========================
 st.subheader("💸 ROI por Cliente")
 
@@ -177,10 +190,7 @@ roi = df.groupby("Cliente_ID").agg({
 }).reset_index()
 
 roi["Receita"] = roi["Sacas"] * PRECO_SACA
-
-# investimento fixo (defensável)
 roi["Investimento"] = 10 * PRECO_SACA
-
 roi["Lucro"] = roi["Receita"] - roi["Investimento"]
 roi["ROI (%)"] = (roi["Lucro"] / roi["Investimento"]) * 100
 
@@ -192,7 +202,6 @@ st.dataframe(roi, use_container_width=True)
 st.subheader("⚠️ Oportunidades")
 
 op = df[df["Status"]!="Convertido"]
-
 op_group = op.groupby("Municipio")["Sacas"].sum().reset_index()
 
 st.dataframe(op_group, use_container_width=True)
@@ -207,7 +216,7 @@ clientes_mun = op.groupby("Municipio")["Cliente_ID"].apply(list).reset_index()
 st.dataframe(clientes_mun, use_container_width=True)
 
 # =========================
-# MAPA COM LEGENDA
+# MAPA RESPONSIVO
 # =========================
 st.subheader("🗺️ Mapa")
 
@@ -240,4 +249,8 @@ legend = """
 """
 mapa.get_root().html.add_child(folium.Element(legend))
 
-st_folium(mapa, width=1200, height=500)
+st_folium(
+    mapa,
+    width=350 if is_mobile else 1200,
+    height=400 if is_mobile else 500
+)
